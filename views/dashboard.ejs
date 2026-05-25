@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %> | Team Task Manager</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Team Task Manager</h1>
+        <p>Welcome back, <strong><%= user.name %></strong></p>
+      </div>
+      <div class="user-info">
+        <span>Abhishek Singh</span>
+        <span class="role"><%= user.role.toUpperCase() %></span>
+        <a class="button secondary" href="/logout">Logout</a>
+      </div>
+    </header>
+
+    <main class="dashboard-container">
+      <section class="summary-cards">
+        <article>
+          <h3>Total Tasks</h3>
+          <p><%= totalCount %></p>
+        </article>
+        <article>
+          <h3>Completed</h3>
+          <p><%= completedCount %></p>
+        </article>
+        <article>
+          <h3>Pending</h3>
+          <p><%= pendingCount %></p>
+        </article>
+        <article class="overdue">
+          <h3>Overdue</h3>
+          <p><%= overdueCount %></p>
+        </article>
+      </section>
+
+      <section class="table-section">
+        <h2>Tasks</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Project</th>
+              <th>Assigned To</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% tasks.forEach((task) => { %>
+            <tr class="<%= task.dueDate < new Date() && task.status !== 'done' ? 'task-overdue' : '' %>">
+              <td><%= task.title %></td>
+              <td><%= task.projectId ? task.projectId.name : 'Unknown' %></td>
+              <td><%= task.assignedTo ? task.assignedTo.name : 'Unknown' %></td>
+              <td><%= task.status %></td>
+              <td><%= task.dueDate.toDateString() %></td>
+              <td>
+                <% if (user.role === 'member' && task.assignedTo && task.assignedTo._id.toString() === user._id.toString()) { %>
+                  <form method="POST" action="/dashboard/tasks/status" class="status-form">
+                    <input type="hidden" name="taskId" value="<%= task._id %>" />
+                    <select name="status">
+                      <option value="todo" <%= task.status === 'todo' ? 'selected' : '' %>>Todo</option>
+                      <option value="in-progress" <%= task.status === 'in-progress' ? 'selected' : '' %>>In Progress</option>
+                      <option value="done" <%= task.status === 'done' ? 'selected' : '' %>>Done</option>
+                    </select>
+                    <button type="submit">Update</button>
+                  </form>
+                <% } else { %>
+                  <span>Read-only</span>
+                <% } %>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </section>
+
+      <% if (user.role === 'admin') { %>
+      <section class="forms-grid">
+        <div class="form-card">
+          <h2>Create Project</h2>
+          <form action="/dashboard/projects" method="POST">
+            <label>Project Name</label>
+            <input type="text" name="name" required />
+            <label>Description</label>
+            <textarea name="description" rows="4" required></textarea>
+            <button type="submit">Create Project</button>
+          </form>
+        </div>
+
+        <div class="form-card">
+          <h2>Add Member to Project</h2>
+          <form action="/dashboard/projects/add-member" method="POST">
+            <label>Project</label>
+            <select name="projectId" required>
+              <% projects.forEach((project) => { %>
+                <option value="<%= project._id %>"><%= project.name %></option>
+              <% }); %>
+            </select>
+            <label>User Email</label>
+            <input type="email" name="email" required />
+            <button type="submit">Add Member</button>
+          </form>
+        </div>
+
+        <div class="form-card full-width">
+          <h2>Create Task</h2>
+          <form action="/dashboard/tasks" method="POST">
+            <label>Title</label>
+            <input type="text" name="title" required />
+            <label>Description</label>
+            <textarea name="description" rows="4" required></textarea>
+            <label>Project</label>
+            <select name="projectId" required>
+              <% projects.forEach((project) => { %>
+                <option value="<%= project._id %>"><%= project.name %></option>
+              <% }); %>
+            </select>
+            <label>Assign To</label>
+            <select name="assignedTo" required>
+              <% members.forEach((member) => { %>
+                <option value="<%= member._id %>"><%= member.name %> (<%= member.role %>)</option>
+              <% }); %>
+            </select>
+            <label>Due Date</label>
+            <input type="date" name="dueDate" required />
+            <button type="submit">Create Task</button>
+          </form>
+        </div>
+      </section>
+      <% } %>
+    </main>
+
+    <!-- ✅ FIXED: Footer inside body -->
+    <div style="
+      position: fixed;
+      bottom: 10px;
+      right: 15px;
+      font-size: 13px;
+      color: #888;
+      opacity: 0.8;
+    ">
+      ✨ Made by Abhishek Singh
+    </div>
+
+  </body>
+</html>
